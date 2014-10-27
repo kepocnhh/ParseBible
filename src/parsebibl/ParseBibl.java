@@ -1,5 +1,6 @@
 package parsebibl;
 
+import api.API;
 import ice.*;
 import java.io.File;
 import java.io.FileInputStream;
@@ -8,6 +9,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -16,7 +19,10 @@ import java.util.List;
 public class ParseBibl
 {
     static private String accpath = "D:\\Загрузки\\ForIce\\accounts\\account";
-    static private String new_accpath = "D:\\Загрузки\\ForIce\\accounts\\account_new";
+    static private String new_accpath = 
+            //"D:\\Загрузки\\ForIce\\accounts\\account_new"
+            "/home/toha/ForIce/account_new"
+            ;
     static private String logpath = 
             //"D:\\ForIce\\IceServer\\log\\"
             "/home/toha/ForIce/OldLogs/"
@@ -29,6 +35,7 @@ public class ParseBibl
             //"D:\\ForIce\\Parse\\log\\"
             "/home/toha/ForIce/ParseLogs/"
             ;
+    static private Itg_old itg;
     static private BaseMessage copy_to_new(BM_old bmo, BaseMessage bm)
     {
         bm.SetDate(bmo.GetDate());
@@ -99,6 +106,10 @@ public class ParseBibl
     static private ping_old copy_from_old(ping p)
     {
         ping_old po = new ping_old(p.GetPing());
+        if(p.GetPing().equals("open"))
+        {
+            itg.date_open = p.GetDate();
+        }
         po = (ping_old) copy_from_old((BM_old)po, (BaseMessage)p);
         return po;
     }
@@ -109,9 +120,14 @@ public class ParseBibl
         /*
                 if(dfr.nameshop!=null)
                 {
-                    dfro.nameshop=dfr.nameshop;
+                    itg.nameshop=dfr.nameshop;
                 }
                 */
+                if(dfr.getTypeEvent() ==DataForRecord.TypeEvent.close)
+                {
+                    itg.date_close = dfr.GetDate();
+                }
+                
         dfro.matrix=dfr.matrix;
         dfro.setCash(dfr.getCash());
         dfro.setTypeEvent(dfr.getTypeEvent().ordinal());
@@ -122,23 +138,6 @@ public class ParseBibl
         DC_old dco = new DC_old();
         dco = (DC_old) copy_from_old((BM_old)dco, (BaseMessage)dc);
         dco.TE=(dc.getTypeEvent().ordinal());
-        /*
-        if(dc.getTypeEvent()==DataCass.TypeEvent.cass)
-        {
-            dco.Cash=dc.getCassCash();
-            dco.Fam="";
-        }
-        if(dc.getTypeEvent()==DataCass.TypeEvent.inkasator)
-        {
-            dco.Cash=dc.getInkCash();
-            dco.Fam=dc.getInkFam();
-        }
-        if(dc.getTypeEvent()==DataCass.TypeEvent.promoter)
-        {
-            dco.Cash=dc.getProCash();
-            dco.Fam="";
-        }
-        */
         return dco;
     }
     static private List<BM_old> ParseBibl_old(String path_from,String path_to,String file) throws FileNotFoundException, IOException, ClassNotFoundException
@@ -148,6 +147,7 @@ public class ParseBibl
             List<BaseMessage> loglist = (List) read.readObject();
         fis.close();
         read.close();
+        itg = new Itg_old();
                     List<BM_old> list_old = new ArrayList<>();
                     for(int i=0;i<loglist.size();i++)
                     {
@@ -165,6 +165,7 @@ public class ParseBibl
                             list_old.add((BM_old)copy_from_old((DataCass)loglist.get(i)));
                         }
                     }
+                            list_old.add((BM_old)itg);
         File myPath = new File(path_to);
         myPath.mkdir();
         myPath.mkdirs();
@@ -175,7 +176,7 @@ public class ParseBibl
                 oos.close();
         return list_old;
     }
-    static private List<BaseMessage> ParseBibl_new(String path_from,String path_to,String file) throws FileNotFoundException, IOException, ClassNotFoundException
+    static private List<BaseMessage> ParseBibl_new(String path_from,String path_to,String file,List<user> ul) throws FileNotFoundException, IOException, ClassNotFoundException
     {
         FileInputStream fis = new FileInputStream(path_from+file);
         ObjectInputStream read = new ObjectInputStream(fis);
@@ -183,9 +184,28 @@ public class ParseBibl
         fis.close();
         read.close();
                     List<BaseMessage> loglist = new ArrayList<>();
+                    String FAM = "ERROR";
+                    user newuser = null;
+                    for(int i=0;i<ul.size();i++)
+                    {
+                        if(file.lastIndexOf(ul.get(i).GetSurname()) != -1)
+                        {
+                            FAM = ul.get(i).GetSurname();
+                            newuser = ul.get(i);
+                            break;
+                        }
+                    }
+                   Itog newitog = new Itog(FAM);
                     for(int i=0;i<list_old.size();i++)
                     {
                         Class c = list_old.get(i).getClass();
+                        if (c == Itg_old.class)
+                        {
+                            Itg_old olditog = (Itg_old)list_old.get(i);
+                            newitog.date_open = olditog.date_open;
+                            newitog.date_close = olditog.date_close;
+                            newitog.nameshop = olditog.nameshop;
+                        }
                         if (c == ping_old.class)
                         {
                             loglist.add((BaseMessage)copy_to_new((ping_old)list_old.get(i)));
@@ -199,10 +219,13 @@ public class ParseBibl
                             loglist.add((BaseMessage)copy_to_new((DC_old)list_old.get(i)));
                         }
                     }
+                    newitog.day_otw = API.weektoString(newitog.date_open.getDay());
+                    newitog = API.Calculate_Itog(newitog, newuser, loglist);//пересчитываем объект итогов
+                            loglist.add((BaseMessage)newitog);
         File myPath = new File(path_to);
         myPath.mkdir();
         myPath.mkdirs();
-                FileOutputStream fos = new FileOutputStream(path_to+file);
+                FileOutputStream fos = new FileOutputStream(path_to+file+ ".ice");
                 ObjectOutputStream oos = new ObjectOutputStream(fos);
                     oos.writeObject(loglist);
                 fos.close();
@@ -231,6 +254,47 @@ public class ParseBibl
                 }
             }
             */
+        List<String> bmlist=null;
+        try
+        {
+            bmlist = API.Get_String_List(new_accpath); //список с данными пользователей
+        }
+        catch (IOException ex)
+        {}
+        catch (ClassNotFoundException ex)
+        {}
+        List<user> userlist = new ArrayList();
+            for (String bmlist1 : bmlist)
+            {
+                DateFormat df2 = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+                Date dt=null;
+                try
+                {
+                    dt = df2.parse(bmlist1.split("\t")[16]);
+                }
+                catch (ParseException ex)
+                {
+                }
+                userlist.add(new user(
+                        bmlist1.split("\t")[0],//name
+                        bmlist1.split("\t")[1],//sur
+                        bmlist1.split("\t")[2],//patr
+                        bmlist1.split("\t")[3],//phone
+                        bmlist1.split("\t")[4],//mail
+                        bmlist1.split("\t")[5],//pass
+                        bmlist1.split("\t")[6],//b
+                        Boolean.parseBoolean(bmlist1.split("\t")[7]),
+                        dt,//date
+                        Double.parseDouble(bmlist1.split("\t")[8]),
+                        Double.parseDouble(bmlist1.split("\t")[9]),
+                        Double.parseDouble(bmlist1.split("\t")[10]),
+                        Double.parseDouble(bmlist1.split("\t")[11]),
+                        Double.parseDouble(bmlist1.split("\t")[12]),
+                        Double.parseDouble(bmlist1.split("\t")[13]),
+                        Double.parseDouble(bmlist1.split("\t")[14]),
+                        Double.parseDouble(bmlist1.split("\t")[15])
+                ));
+            }
             List<BaseMessage> loglist = ParseBibl_new(parsepath+
                     //"2014\\7\\23\\"
                     "2014/7/23/"
@@ -238,8 +302,8 @@ public class ParseBibl
                     //"2014\\7\\23\\"
                     "2014/7/23/"
                     ,
-                    "Благонравова 23.7.2014"
-                    );
+                    "Благонравова 23.7.2014" 
+                    ,userlist);
             if (loglist != null)
             {
                 for (BaseMessage bm : loglist)
