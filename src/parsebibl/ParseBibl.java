@@ -17,9 +17,18 @@ public class ParseBibl
 {
     static private String accpath = "D:\\Загрузки\\ForIce\\accounts\\account";
     static private String new_accpath = "D:\\Загрузки\\ForIce\\accounts\\account_new";
-    static private String logpath = "D:\\ForIce\\IceServer\\log\\";
-    static private String newpath = "D:\\ForIce\\log\\";
-    static private String parsepath = "D:\\ForIce\\Parse\\log\\";
+    static private String logpath = 
+            //"D:\\ForIce\\IceServer\\log\\"
+            "/home/toha/ForIce/OldLogs/"
+            ;
+    static private String newpath = 
+            //"D:\\ForIce\\log\\"
+            "/home/toha/ForIce/NewLogs/"
+            ;
+    static private String parsepath = 
+            //"D:\\ForIce\\Parse\\log\\"
+            "/home/toha/ForIce/ParseLogs/"
+            ;
     static private BaseMessage copy_to_new(BM_old bmo, BaseMessage bm)
     {
         bm.SetDate(bmo.GetDate());
@@ -38,8 +47,12 @@ public class ParseBibl
     }
     static private DataForRecord copy_to_new(DFR_old dfro)
     {
-        //DataForRecord dfr = new DataForRecord();
         DataForRecord dfr = null;
+        try{
+            dfr = new DataForRecord(new Strings("/home/toha/ForIce/config"));
+        } catch (IOException ex) {
+        }
+        //DataForRecord dfr = null;
         dfr = (DataForRecord) copy_to_new((BM_old)dfro, (BaseMessage)dfr);
         if(dfro.nameshop!=null)
         {
@@ -200,16 +213,36 @@ public class ParseBibl
     {
         try
         {
+            /*
             List<BM_old> loglist = ParseBibl_old(logpath+
-                    "2014\\7\\23\\"
+                    //"2014\\7\\23\\"
+                    "2014/7/23/"
                     ,parsepath+
-                    "2014\\7\\23\\"
+                    //"2014\\7\\23\\"
+                    "2014/7/23/"
                     ,
                     "Благонравова 23.7.2014"
                     );
             if (loglist != null)
             {
                 for (BM_old bm : loglist)
+                {
+                    System.out.println(bm.toString());
+                }
+            }
+            */
+            List<BaseMessage> loglist = ParseBibl_new(parsepath+
+                    //"2014\\7\\23\\"
+                    "2014/7/23/"
+                    ,newpath+
+                    //"2014\\7\\23\\"
+                    "2014/7/23/"
+                    ,
+                    "Благонравова 23.7.2014"
+                    );
+            if (loglist != null)
+            {
+                for (BaseMessage bm : loglist)
                 {
                     System.out.println(bm.toString());
                 }
