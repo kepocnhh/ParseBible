@@ -184,18 +184,16 @@ public class ParseBibl
         fis.close();
         read.close();
                     List<BaseMessage> loglist = new ArrayList<>();
-                    String FAM = "ERROR";
                     user newuser = null;
                     for(int i=0;i<ul.size();i++)
                     {
                         if(file.lastIndexOf(ul.get(i).GetSurname()) != -1)
                         {
-                            FAM = ul.get(i).GetSurname();
                             newuser = ul.get(i);
                             break;
                         }
                     }
-                   Itog newitog = new Itog(FAM);
+                   Itog newitog = new Itog(newuser.GetMail());
                     for(int i=0;i<list_old.size();i++)
                     {
                         Class c = list_old.get(i).getClass();
