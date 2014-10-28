@@ -236,22 +236,29 @@ public class ParseBibl
     {
         try
         {
+            Date bgn = new Date();
+            bgn.setYear(114);
+            bgn.setMonth(6);
+            bgn.setDate(1);
+            Date end = new Date();
+            end.setYear(114);
+            end.setMonth(6);
+            end.setDate(30);
             /*
-            List<BM_old> loglist = ParseBibl_old(logpath+
-                    //"2014\\7\\23\\"
-                    "2014/7/23/"
-                    ,parsepath+
-                    //"2014\\7\\23\\"
-                    "2014/7/23/"
-                    ,
-                    "Благонравова 23.7.2014"
-                    );
-            if (loglist != null)
+            while(bgn.before(end))
             {
-                for (BM_old bm : loglist)
+                String path = (bgn.getYear()+1900)+"/"+(bgn.getMonth()+1)+"/"+bgn.getDate()+"/";
+                String[] files = new File(logpath+path).list();
+                for(int i=0; i<files.length;i++)
                 {
-                    System.out.println(bm.toString());
+                    if(files[i].equals("photo")||files[i].equals("pdf")||files[i].equals("supers"))
+                    {
+                        continue;
+                    }
+                    List<BM_old> loglist = ParseBibl_old(logpath+path,parsepath+path,files[i]);
+                    System.out.println(path+files[i]);
                 }
+                bgn.setDate(bgn.getDate()+1);
             }
             */
         List<String> bmlist=null;
@@ -295,21 +302,20 @@ public class ParseBibl
                         Double.parseDouble(bmlist1.split("\t")[15])
                 ));
             }
-            List<BaseMessage> loglist = ParseBibl_new(parsepath+
-                    //"2014\\7\\23\\"
-                    "2014/7/23/"
-                    ,newpath+
-                    //"2014\\7\\23\\"
-                    "2014/7/23/"
-                    ,
-                    "Благонравова 23.7.2014" 
-                    ,userlist);
-            if (loglist != null)
+            while(bgn.before(end))
             {
-                for (BaseMessage bm : loglist)
+                String path = (bgn.getYear()+1900)+"/"+(bgn.getMonth()+1)+"/"+bgn.getDate()+"/";
+                String[] files = new File(parsepath+path).list();
+                for(int i=0; i<files.length;i++)
                 {
-                    System.out.println(bm.toString());
+                    if(files[i].equals("photo")||files[i].equals("pdf")||files[i].equals("supers"))
+                    {
+                        continue;
+                    }
+                     ParseBibl_new(parsepath+path,newpath+path,files[i],userlist);
+                    System.out.println(path+files[i]);
                 }
+                bgn.setDate(bgn.getDate()+1);
             }
         }
         catch (Exception ex)
