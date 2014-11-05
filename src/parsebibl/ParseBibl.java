@@ -15,6 +15,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ParseBibl
 {
@@ -176,6 +178,7 @@ public class ParseBibl
                 oos.close();
         return list_old;
     }
+    
     static private List<BaseMessage> ParseBibl_new(String path_from,String path_to,String file,List<user> ul) throws FileNotFoundException, IOException, ClassNotFoundException
     {
         FileInputStream fis = new FileInputStream(path_from+file);
@@ -194,6 +197,8 @@ public class ParseBibl
                         }
                     }
                    Itog newitog = new Itog(newuser.GetMail());
+                   boolean opn = false;
+                   boolean cls = false;
                     for(int i=0;i<list_old.size();i++)
                     {
                         Class c = list_old.get(i).getClass();
@@ -210,12 +215,30 @@ public class ParseBibl
                         }
                         if (c == DFR_old.class)
                         {
+                            DFR_old tmp = (DFR_old)list_old.get(i);
+                            if(tmp.getTypeEvent() == 0)
+                            {
+                                opn = true;
+                            }
+                            if(tmp.getTypeEvent() == 1)
+                            {
+                                cls = true;
+                            }
                             loglist.add((BaseMessage)copy_to_new((DFR_old)list_old.get(i)));
                         }
                         if (c == DC_old.class)
                         {
                             loglist.add((BaseMessage)copy_to_new((DC_old)list_old.get(i)));
                         }
+                    }
+                    if(opn&&cls)
+                    {
+                        
+                    }
+                    else
+                    {
+                        System.out.println(file + "\tERROR!!!");
+                        return loglist;
                     }
                     newitog.day_otw = API.weektoString(newitog.date_open.getDay());
                     newitog = API.Calculate_Itog(newitog, newuser, loglist);//пересчитываем объект итогов
@@ -230,35 +253,9 @@ public class ParseBibl
                 oos.close();
         return loglist;
     }
-    public static void main(String[] args)
+    
+    private static void Parse_new(Date bgn, Date end)
     {
-        try
-        {
-            Date bgn = new Date();
-            bgn.setYear(114);
-            bgn.setMonth(6);
-            bgn.setDate(1);
-            Date end = new Date();
-            end.setYear(114);
-            end.setMonth(6);
-            end.setDate(30);
-            /*
-            while(bgn.before(end))
-            {
-                String path = (bgn.getYear()+1900)+"/"+(bgn.getMonth()+1)+"/"+bgn.getDate()+"/";
-                String[] files = new File(logpath+path).list();
-                for(int i=0; i<files.length;i++)
-                {
-                    if(files[i].equals("photo")||files[i].equals("pdf")||files[i].equals("supers"))
-                    {
-                        continue;
-                    }
-                    List<BM_old> loglist = ParseBibl_old(logpath+path,parsepath+path,files[i]);
-                    System.out.println(path+files[i]);
-                }
-                bgn.setDate(bgn.getDate()+1);
-            }
-            */
         List<String> bmlist=null;
         try
         {
@@ -280,6 +277,7 @@ public class ParseBibl
                 catch (ParseException ex)
                 {
                 }
+                
                 userlist.add(new user(
                         bmlist1.split("\t")[0],//name
                         bmlist1.split("\t")[1],//sur
@@ -299,6 +297,7 @@ public class ParseBibl
                         Double.parseDouble(bmlist1.split("\t")[14]),
                         Double.parseDouble(bmlist1.split("\t")[15])
                 ));
+                
             }
             while(bgn.before(end))
             {
@@ -306,19 +305,123 @@ public class ParseBibl
                 String[] files = new File(parsepath+path).list();
                 for(int i=0; i<files.length;i++)
                 {
-                    if(files[i].equals("photo")||files[i].equals("pdf")||files[i].equals("supers"))
+                    if(files[i].equals("photo")||files[i].equals("pdf"))
                     {
                         continue;
                     }
-                     ParseBibl_new(parsepath+path,newpath+path,files[i],userlist);
+                    if(files[i].equals("supers"))
+                    {
+                        String path2= path + "supers"+"/";
+                        String[] files_supers = new File(parsepath+path2).list();
+                        for(int j=0; j<files_supers.length;j++)
+                        {
+                            String superpth= path2+ files_supers[j]+"/";
+                            String[] _super = new File(parsepath+superpth).list();
+                            for(int k=0; k<_super.length;k++)
+                            {
+                                if(_super[k].equals("photo")||_super[k].equals("pdf"))
+                                {
+                                    continue;
+                                }
+                                
+                                try {
+                                    ParseBibl_new(parsepath+superpth,newpath+superpth,_super[k],userlist);
+                                } catch (IOException ex) {
+                                    System.out.println(_super[k]+" "+ex.getMessage());
+                                    continue;
+                                } catch (ClassNotFoundException ex) {
+                                    System.out.println(_super[k]+" "+ex.getMessage());
+                                    continue;
+                                }
+                                
+                                   System.out.println(superpth+_super[k]);
+                            }
+                        }
+                        continue;
+                    }
+                    
+                    try {
+                        ParseBibl_new(parsepath+path,newpath+path,files[i],userlist);
+                    } catch (IOException ex) {
+                        System.out.println(files[i]+" "+ex.getMessage());
+                        continue;
+                    } catch (ClassNotFoundException ex) {
+                        System.out.println(files[i]+" "+ex.getMessage());
+                        continue;
+                    }
+                    
                     System.out.println(path+files[i]);
                 }
                 bgn.setDate(bgn.getDate()+1);
             }
-        }
-        catch (Exception ex)
-        {
-            System.out.println(ex.toString());
-        }
+        
+    }
+    private static void Parse_old(Date bgn, Date end)
+    {
+            while(bgn.before(end))
+            {
+                String path = (bgn.getYear()+1900)+"/"+(bgn.getMonth()+1)+"/"+bgn.getDate()+"/";
+                String[] files = new File(logpath+path).list();
+                for(int i=0; i<files.length;i++)
+                {
+                    if(files[i].equals("photo")||files[i].equals("pdf"))
+                    {
+                        continue;
+                    }
+                    if(files[i].equals("supers"))
+                    {
+                        String path2 = path+"supers"+"/";
+                        String[] files_supers = new File(logpath+path2).list();
+                        for(int j=0; j<files_supers.length;j++)
+                        {
+                            String superpth= path2+ files_supers[j]+"/";
+                            String[] _super = new File(logpath+superpth).list();
+                            for(int k=0; k<_super.length;k++)
+                            {
+                                if(_super[k].equals("photo")||_super[k].equals("pdf"))
+                                {
+                                    continue;
+                                }
+                                try {
+                                    ParseBibl_old(logpath+superpth,parsepath+superpth,_super[k]);
+                                } catch (IOException ex) {
+                                    System.out.println(_super[k]+" "+ex.getMessage());
+                                    continue;
+                                } catch (ClassNotFoundException ex) {
+                                    System.out.println(_super[k]+" "+ex.getMessage());
+                                    continue;
+                                }
+                                   System.out.println(_super[k]);
+                            }
+                        }
+                        continue;
+                    }
+                    try {
+                        List<BM_old> loglist = ParseBibl_old(logpath+path,parsepath+path,files[i]);
+                    } catch (IOException ex) {
+                        System.out.println(files[i]+" "+ex.getMessage());
+                        continue;
+                    } catch (ClassNotFoundException ex) {
+                        System.out.println(files[i]+" "+ex.getMessage());
+                        continue;
+                    }
+                    System.out.println(path+files[i]);
+                }
+                bgn.setDate(bgn.getDate()+1);
+            }
+    }
+    public static void main(String[] args)
+    {
+            Date bgn = new Date();
+            bgn.setYear(114);
+            bgn.setMonth(6);
+            bgn.setDate(1);
+            Date end = new Date();
+            end.setYear(114);
+            end.setMonth(6);
+            end.setDate(30);
+            //
+            //Parse_old(bgn,end);
+            Parse_new(bgn,end);
     }
 }
