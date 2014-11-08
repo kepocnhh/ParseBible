@@ -303,6 +303,12 @@ public class ParseBibl
             {
                 String path = (bgn.getYear()+1900)+"/"+(bgn.getMonth()+1)+"/"+bgn.getDate()+"/";
                 String[] files = new File(parsepath+path).list();
+                if(files == null)
+                {
+                                   System.out.println(path+" - "+"files == null");
+                    bgn.setDate(bgn.getDate()+1);
+                    continue;
+                }
                 for(int i=0; i<files.length;i++)
                 {
                     if(files[i].equals("photo")||files[i].equals("pdf"))
