@@ -111,7 +111,7 @@ public class ParseBibl
     static private ping_old copy_from_old(ping p)
     {
         ping_old po = new ping_old(p.GetPing());
-        if(p.GetPing().equals("open"))
+        if(p.GetPing().equals("open")&&itg.date_open==null)
         {
             itg.date_open = p.GetDate();
         }
