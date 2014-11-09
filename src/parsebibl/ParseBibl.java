@@ -15,27 +15,25 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class ParseBibl
 {
     static private String accpath = "D:\\Загрузки\\ForIce\\accounts\\account";
     static private String new_accpath = 
-            //"D:\\Загрузки\\ForIce\\accounts\\account_new"
-            "/home/toha/ForIce/account_new"
+            "D:\\Загрузки\\ForIce\\NewAccounts\\account"
+            //"/home/toha/ForIce/account_new"
             ;
     static private String logpath = 
-            //"D:\\ForIce\\IceServer\\log\\"
-            "/home/toha/ForIce/OldLogs/"
+            "D:\\Загрузки\\ForIce\\Logs\\OldLogs\\"
+            //"/home/toha/ForIce/OldLogs/"
             ;
     static private String newpath = 
-            //"D:\\ForIce\\log\\"
-            "/home/toha/ForIce/NewLogs/"
+            "D:\\Загрузки\\ForIce\\Logs\\NewLogs\\"
+            //"/home/toha/ForIce/NewLogs/"
             ;
     static private String parsepath = 
-            //"D:\\ForIce\\Parse\\log\\"
-            "/home/toha/ForIce/ParseLogs/"
+            "D:\\Загрузки\\ForIce\\Logs\\ParseLogs\\"
+            //"/home/toha/ForIce/ParseLogs/"
             ;
     static private Itg_old itg;
     static private BaseMessage copy_to_new(BM_old bmo, BaseMessage bm)
@@ -58,15 +56,20 @@ public class ParseBibl
     {
         DataForRecord dfr = null;
         try{
-            dfr = new DataForRecord(new Strings("/home/toha/ForIce/config"));
+            dfr = new DataForRecord(new Strings(
+                    //"/home/toha/ForIce/config"
+                    "D:\\Загрузки\\ForIce\\config"
+            ));
         } catch (IOException ex) {
         }
         //DataForRecord dfr = null;
         dfr = (DataForRecord) copy_to_new((BM_old)dfro, (BaseMessage)dfr);
+        /*
         if(dfro.nameshop!=null)
         {
-            //dfr.nameshop=dfro.nameshop;
+            dfr.nameshop=dfro.nameshop;
         }
+        */
         dfr.matrix=dfro.matrix;
         dfr.setCash(dfro.getCash());
         int i=0;
@@ -119,17 +122,14 @@ public class ParseBibl
     {
         DFR_old dfro = new DFR_old();
         dfro = (DFR_old) copy_from_old((BM_old)dfro, (BaseMessage)dfr);
-        /*
-                if(dfr.nameshop!=null)
-                {
-                    itg.nameshop=dfr.nameshop;
-                }
-                */
+//                if(dfr.nameshop!=null)
+//                {
+//                    itg.nameshop=dfr.nameshop;
+//                }
                 if(dfr.getTypeEvent() ==DataForRecord.TypeEvent.close)
                 {
                     itg.date_close = dfr.GetDate();
                 }
-                
         dfro.matrix=dfr.matrix;
         dfro.setCash(dfr.getCash());
         dfro.setTypeEvent(dfr.getTypeEvent().ordinal());
@@ -178,7 +178,10 @@ public class ParseBibl
                 oos.close();
         return list_old;
     }
-    
+//    static private List<BaseMessage> ParseBibl_new(String path_from,String path_to,String file,List<user> ul) throws FileNotFoundException, IOException, ClassNotFoundException
+//    {
+//        return null;
+//    }
     static private List<BaseMessage> ParseBibl_new(String path_from,String path_to,String file,List<user> ul) throws FileNotFoundException, IOException, ClassNotFoundException
     {
         FileInputStream fis = new FileInputStream(path_from+file);
@@ -253,7 +256,6 @@ public class ParseBibl
                 oos.close();
         return loglist;
     }
-    
     private static void Parse_new(Date bgn, Date end)
     {
         List<String> bmlist=null;
@@ -268,36 +270,7 @@ public class ParseBibl
         List<user> userlist = new ArrayList();
             for (String bmlist1 : bmlist)
             {
-                DateFormat df2 = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-                Date dt=null;
-                try
-                {
-                    dt = df2.parse(bmlist1.split("\t")[16]);
-                }
-                catch (ParseException ex)
-                {
-                }
-                
-                userlist.add(new user(
-                        bmlist1.split("\t")[0],//name
-                        bmlist1.split("\t")[1],//sur
-                        bmlist1.split("\t")[2],//patr
-                        bmlist1.split("\t")[3],//phone
-                        bmlist1.split("\t")[4],//mail
-                        bmlist1.split("\t")[5],//pass
-                        bmlist1.split("\t")[6],//b
-                        Boolean.parseBoolean(bmlist1.split("\t")[7]),
-                        dt,//date
-                        Double.parseDouble(bmlist1.split("\t")[8]),
-                        Double.parseDouble(bmlist1.split("\t")[9]),
-                        Double.parseDouble(bmlist1.split("\t")[10]),
-                        Double.parseDouble(bmlist1.split("\t")[11]),
-                        Double.parseDouble(bmlist1.split("\t")[12]),
-                        Double.parseDouble(bmlist1.split("\t")[13]),
-                        Double.parseDouble(bmlist1.split("\t")[14]),
-                        Double.parseDouble(bmlist1.split("\t")[15])
-                ));
-                
+                userlist.add(new user(bmlist1));
             }
             while(bgn.before(end))
             {
@@ -368,6 +341,12 @@ public class ParseBibl
             {
                 String path = (bgn.getYear()+1900)+"/"+(bgn.getMonth()+1)+"/"+bgn.getDate()+"/";
                 String[] files = new File(logpath+path).list();
+                if(files == null)
+                {
+                                   System.out.println(path+" - "+"files == null");
+                    bgn.setDate(bgn.getDate()+1);
+                    continue;
+                }
                 for(int i=0; i<files.length;i++)
                 {
                     if(files[i].equals("photo")||files[i].equals("pdf"))
@@ -424,7 +403,7 @@ public class ParseBibl
             bgn.setDate(1);
             Date end = new Date();
             end.setYear(114);
-            end.setMonth(6);
+            end.setMonth(9);
             end.setDate(30);
             //
             //Parse_old(bgn,end);
