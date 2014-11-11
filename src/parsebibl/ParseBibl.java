@@ -9,32 +9,33 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 public class ParseBibl
 {
-    static private String accpath = "D:\\Загрузки\\ForIce\\accounts\\account";
-    static private String new_accpath = 
-            "D:\\Загрузки\\ForIce\\NewAccounts\\account"
-            //"/home/toha/ForIce/account_new"
-            ;
-    static private String logpath = 
-            "D:\\Загрузки\\ForIce\\Logs\\OldLogs\\"
-            //"/home/toha/ForIce/OldLogs/"
-            ;
-    static private String newpath = 
-            "D:\\Загрузки\\ForIce\\Logs\\NewLogs\\"
-            //"/home/toha/ForIce/NewLogs/"
-            ;
-    static private String parsepath = 
-            "D:\\Загрузки\\ForIce\\Logs\\ParseLogs\\"
-            //"/home/toha/ForIce/ParseLogs/"
-            ;
+    static private String new_accpath;
+    static private String logpath;
+    static private String newpath;
+    static private String parsepath ;
+    static private String strings_pth;
+            static private void linux_deb()
+            {
+                new_accpath = "/home/toha/ForIce/account_new";
+                logpath = "/home/toha/ForIce/OldLogs/";
+                newpath = "/home/toha/ForIce/NewLogs/";
+                parsepath = "/home/toha/ForIce/ParseLogs/";
+                strings_pth = "/home/toha/ForIce/config";
+            }
+            static private void windows_deb()
+            {
+                new_accpath = "D:\\Загрузки\\ForIce\\NewAccounts\\account";
+                logpath = "D:\\Загрузки\\ForIce\\Logs\\OldLogs\\";
+                newpath = "D:\\Загрузки\\ForIce\\Logs\\NewLogs\\";
+                parsepath = "D:\\Загрузки\\ForIce\\Logs\\ParseLogs\\";
+                strings_pth = "D:\\Загрузки\\ForIce\\config";
+            }
     static private Itg_old itg;
     static private BaseMessage copy_to_new(BM_old bmo, BaseMessage bm)
     {
@@ -56,20 +57,10 @@ public class ParseBibl
     {
         DataForRecord dfr = null;
         try{
-            dfr = new DataForRecord(new Strings(
-                    //"/home/toha/ForIce/config"
-                    "D:\\Загрузки\\ForIce\\config"
-            ));
+            dfr = new DataForRecord(new Strings(strings_pth));
         } catch (IOException ex) {
         }
-        //DataForRecord dfr = null;
         dfr = (DataForRecord) copy_to_new((BM_old)dfro, (BaseMessage)dfr);
-        /*
-        if(dfro.nameshop!=null)
-        {
-            dfr.nameshop=dfro.nameshop;
-        }
-        */
         dfr.matrix=dfro.matrix;
         dfr.setCash(dfro.getCash());
         int i=0;
@@ -135,13 +126,35 @@ public class ParseBibl
         dfro.setTypeEvent(dfr.getTypeEvent().ordinal());
         return dfro;
     }
+    /*
     static private DC_old copy_from_old(DataCass dc)
     {
         DC_old dco = new DC_old();
         dco = (DC_old) copy_from_old((BM_old)dco, (BaseMessage)dc);
-        dco.TE=(dc.getTypeEvent().ordinal());
+        dco.TE=dc.getTypeEvent().ordinal();
+        if(dc.getTypeEvent()==DataCass.TypeEvent.inkasator)
+        {
+            dco.Fam = dc.getInkFam();
+        }
+        else
+        {
+            dco.Fam = "ПУСТО";
+        }
+        if(dc.getTypeEvent()==DataCass.TypeEvent.inkasator)
+        {
+            dco.Cash = dc.getInkCash();
+        }
+        else if(dc.getTypeEvent()==DataCass.TypeEvent.cass)
+        {
+            dco.Cash = dc.getCassCash();
+        }
+        else if(dc.getTypeEvent()==DataCass.TypeEvent.promoter)
+        {
+            dco.Cash = dc.getProCash();
+        }
         return dco;
     }
+    */
     static private List<BM_old> ParseBibl_old(String path_from,String path_to,String file) throws FileNotFoundException, IOException, ClassNotFoundException
     {
         FileInputStream fis = new FileInputStream(path_from+file);
@@ -164,7 +177,7 @@ public class ParseBibl
                         }
                         if (c == DataCass.class)
                         {
-                            list_old.add((BM_old)copy_from_old((DataCass)loglist.get(i)));
+//                            list_old.add((BM_old)copy_from_old((DataCass)loglist.get(i)));
                         }
                     }
                             list_old.add((BM_old)itg);
@@ -406,7 +419,9 @@ public class ParseBibl
             end.setMonth(9);
             end.setDate(30);
             //
-            //Parse_old(bgn,end);
+            linux_deb();
+            //windows_deb();
+//            Parse_old(bgn,end);
             Parse_new(bgn,end);
     }
 }
